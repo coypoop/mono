@@ -574,6 +574,7 @@ AC_SUBST(extra_runtime_ldflags)
 AM_CONDITIONAL(HOST_WIN32, test x$host_win32 = xyes)
 AM_CONDITIONAL(TARGET_WIN32, test x$target_win32 = xyes)
 AM_CONDITIONAL(HOST_LINUX, echo x$target_os | grep -q linux)
+AM_CONDITIONAL(HOST_NETBSD, echo x$target_os | grep -q netbsd)
 AM_CONDITIONAL(HOST_DARWIN, test x$host_darwin = xyes)
 AM_CONDITIONAL(HOST_SIGPOSIX, test x$use_sigposix = xyes)
 AM_CONDITIONAL(HOST_ANDROID, test x$platform_android = xyes)
@@ -586,7 +587,7 @@ PLATFORM_AOT_SUFFIX=.dylib
 PLATFORM_AOT_PREFIX=lib
 fi
 
-if test -z "$HOST_LINUX_TRUE"; then :
+if [ -z "$HOST_LINUX_TRUE" ] || [ -z "$HOST_NETBSD_TRUE" ]; then :
 PLATFORM_AOT_SUFFIX=.so
 PLATFORM_AOT_PREFIX=lib
 fi
