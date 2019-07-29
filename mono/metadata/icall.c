@@ -120,6 +120,8 @@
 #include "mono/utils/mono-threads-coop.h"
 #include "mono/metadata/icall-signatures.h"
 
+#undef bool
+
 //#define MONO_DEBUG_ICALLARRAY
 
 #ifdef MONO_DEBUG_ICALLARRAY
