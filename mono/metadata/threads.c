@@ -784,6 +784,10 @@ mono_thread_internal_set_priority (MonoInternalThread *internal, MonoThreadPrior
 #else
 	min = sched_get_priority_min (policy);
 	max = sched_get_priority_max (policy);
+
+	/* Not tunable. Bail out */
+	if ((min == -1) || (max == -1))
+		return;
 #endif
 	MONO_EXIT_GC_SAFE;
 
