@@ -757,7 +757,7 @@ mono_thread_internal_set_priority (MonoInternalThread *internal, MonoThreadPrior
 	// When this API becomes available on an arbitrary thread, we can use it,
 	// not available on current Zircon
 	//
-#else /* !HOST_WIN32 and not HOST_FUCHSIA */
+#elif _POSIX_PRIORITY_SCHEDULING /* && (!HOST_WIN32 and not HOST_FUCHSIA) */
 	pthread_t tid;
 	int policy;
 	struct sched_param param;
@@ -771,7 +771,6 @@ mono_thread_internal_set_priority (MonoInternalThread *internal, MonoThreadPrior
 	if (res != 0)
 		g_error ("%s: pthread_getschedparam failed, error: \"%s\" (%d)", __func__, g_strerror (res), res);
 
-#ifdef _POSIX_PRIORITY_SCHEDULING
 	int max, min;
 
 	/* Necessary to get valid priority range */
@@ -794,45 +793,27 @@ mono_thread_internal_set_priority (MonoInternalThread *internal, MonoThreadPrior
 		sposition = priority - MONO_THREAD_PRIORITY_LOWEST;
 		dposition = (sposition / srange) * drange;
 		param.sched_priority = (int)(dposition + min);
-	} else
-#endif
-	{
-		switch (policy) {
-		case SCHED_FIFO:
-		case SCHED_RR:
-			param.sched_priority = 50;
-			break;
-#ifdef SCHED_BATCH
-		case SCHED_BATCH:
-#endif
-		case SCHED_OTHER:
-			param.sched_priority = 0;
-			break;
-		default:
-			g_warning ("%s: unknown policy %d", __func__, policy);
-			return;
-		}
-	}
 
-	MONO_ENTER_GC_SAFE;
+		MONO_ENTER_GC_SAFE;
 #if defined(__PASE__)
-	/* only scheduling param allowed by IBM i */
-	res = pthread_setschedparam (tid, SCHED_OTHER, &param);
+		/* only scheduling param allowed by IBM i */
+		res = pthread_setschedparam (tid, SCHED_OTHER, &param);
 #else
-	res = pthread_setschedparam (tid, policy, &param);
+		res = pthread_setschedparam (tid, policy, &param);
 #endif
-	MONO_EXIT_GC_SAFE;
-	if (res != 0) {
-		if (res == EPERM) {
+		MONO_EXIT_GC_SAFE;
+		if (res != 0) {
+			if (res == EPERM) {
 #if !defined(_AIX)
-			/* AIX doesn't like doing this and will spam this every time;
-			 * weirdly, i doesn't complain
-			 */
-			g_warning ("%s: pthread_setschedparam failed, error: \"%s\" (%d)", __func__, g_strerror (res), res);
+				/* AIX doesn't like doing this and will spam this every time;
+				 * weirdly, i doesn't complain
+				 */
+				g_warning ("%s: pthread_setschedparam failed, error: \"%s\" (%d)", __func__, g_strerror (res), res);
 #endif
-			return;
+				return;
+			}
+			g_error ("%s: pthread_setschedparam failed, error: \"%s\" (%d)", __func__, g_strerror (res), res);
 		}
-		g_error ("%s: pthread_setschedparam failed, error: \"%s\" (%d)", __func__, g_strerror (res), res);
 	}
 #endif /* HOST_WIN32 */
 }
